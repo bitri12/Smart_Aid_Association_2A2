@@ -1,0 +1,99 @@
+#include "mainwindow.h"
+#include "ui_mainwindow.h"
+#include "familles.h"
+#include<QMessageBox>
+#include<QIntValidator>
+
+MainWindow::MainWindow(QWidget *parent) :
+    QMainWindow(parent),
+    ui(new Ui::MainWindow)
+{
+    ui->setupUi(this);
+    ui->tableView-> setModel(F.afficher());
+}
+
+MainWindow::~MainWindow()
+{
+    delete ui;
+}
+
+void MainWindow::on_pb_ajouter_clicked()
+{
+
+    int id_famille = ui->Le_id->text().toInt();
+    QString nom=ui->le_nom->text();
+    QString prenom=ui->le_prenom->text();
+    int nbr = ui->le_nbr->text().toInt();
+    int num = ui->le_tel->text().toInt();
+    QString loca = ui->la_loca->text();
+    Familles F(id_famille,nom,prenom,nbr,num,loca);
+    bool test=F.ajouter();
+    if (test==false)
+    {
+        ui->tableView->setModel(F.afficher());
+        QMessageBox::information(nullptr, QObject::tr("ok"),
+                                 QObject::tr("Ajout effectué\n"),
+                                 QMessageBox::Cancel);
+    }
+    else
+    {
+        QMessageBox::critical(nullptr, QObject::tr("not ok"),
+                                 QObject::tr("Ajout non  effectué\n"),
+                                 QMessageBox::Cancel);
+    }
+
+}
+
+
+void MainWindow::on_pb_supp_clicked()
+{
+    int id_famille=ui->supp->text().toInt();
+    bool test=F.supprimer(id_famille);
+
+    if (test)
+
+
+        {
+         ui->tableView->setModel(F.afficher());
+            QMessageBox::information(nullptr, QObject::tr("ok"),
+                                     QObject::tr("suppression effectué\n"),
+                                     QMessageBox::Cancel);
+        }
+        else
+        {
+            QMessageBox::critical(nullptr, QObject::tr("not ok"),
+                                     QObject::tr("suppression non  effectué\n"),
+                                     QMessageBox::Cancel);
+        }
+}
+
+
+void MainWindow::on_pushButton_clicked()
+{
+Familles F;
+    F.setid_famille(ui->Le_id->text().toUInt());
+    F.setnom(ui->le_nom->text());
+    F.setprenom(ui->le_prenom->text());
+    F.setnbr(ui->le_nbr->text().toUInt());
+    F.setnumero( ui->le_tel->text().toUInt());
+    F.setloca(ui->la_loca->text());
+    F.modifier(F);
+     ui->tableView->setModel(F.afficher());
+    bool test=F.modifier(F);
+    if (test)
+    {
+        ui->tableView->setModel(F.afficher());
+           QMessageBox::information(nullptr, QObject::tr("ok"),
+                                    QObject::tr("modification effectuée\n"),
+                                    QMessageBox::Cancel);}
+    else
+    {
+        QMessageBox::critical(nullptr, QObject::tr("not ok"),
+                                 QObject::tr("modification non effectuée\n"),
+                                 QMessageBox::Cancel);
+    }
+}
+
+
+
+
