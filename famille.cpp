@@ -86,4 +86,28 @@ bool Familles::modifier(Familles f)
        query.bindValue(":loca", f.getloca());
     return query.exec();
 }
+QSqlQueryModel *Familles::tri()
+{
+   QSqlQueryModel * model= new QSqlQueryModel();
+    QSqlQuery *q = new QSqlQuery();
+
+    q->prepare("SELECT * FROM familles ORDER BY id_famille ");
+    q->exec();
+    model->setQuery(*q);
+    return model;
+
+}
+void Familles::recherche2(QTableView* table,int spec){
+
+    QSqlQueryModel *model= new QSqlQueryModel();
+    QSqlQuery *query=new QSqlQuery;
+    query->prepare("select * from familles  where id_famille=:id_famille");
+    query->bindValue(":id_famille",spec);
+    query->exec();
+    model->setQuery(*query);
+    table->setModel(model);
+    table->show();
+}
+
+
 
