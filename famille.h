@@ -27,6 +27,8 @@ public:
     QSqlQueryModel *afficher();
     bool supprimer(int);
     bool modifier(Familles f);
+       QSqlQueryModel* tri();
+  void recherche2(QTableView* table,int);
 
 
 private:
