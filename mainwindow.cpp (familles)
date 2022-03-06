@@ -94,6 +94,34 @@ Familles F;
     }
 }
 
+void MainWindow::on_TRI_clicked()
+{
+    Familles f;
+
+  ui->tableView->setModel(f.tri());
+}
+
+
+
+
+void MainWindow::on_pushButton_2_clicked()
+{
+    QString findText;
+          QString text = ui->lineEdit_2->text();
+      Familles f;
+      QTableView* table=ui->tableView;
+          if (text.isEmpty()) {
+              QMessageBox::information(this, tr("Empty Field"),
+                  tr("Entrez une specialité a rechercher."));
+              ui->tableView->setModel(f.afficher());
+              return;
+          } else {
+              findText = text;
+              f.recherche2(table,findText.toUInt());
+
+
+  }
+}
 
 
 
