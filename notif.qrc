@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/"/>
+    <qresource prefix="/C:\Users\joujo\Documents\crud">
+        <file>myappico.png.png</file>
+    </qresource>
+    <qresource prefix="/notif.qrc"/>
+</RCC>
