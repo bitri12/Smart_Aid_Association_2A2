@@ -4,9 +4,7 @@
 #include <QMainWindow>
 #include "menugestionstock.h"
 #include "voirstock.h"
-#include <QtCharts/QChartView>
-#include <QtCharts/QPieSeries>
-#include <QtCharts/QPieSlice>
+#include <QtCharts>
 
 namespace Ui {
 class statistique;
