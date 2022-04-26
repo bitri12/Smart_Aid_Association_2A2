@@ -1,4 +1,4 @@
-#include "excel.h"
+#include "exel.h"
 #include <QSqlQuery>
 #include <QtDebug>
 #include <QVariant>

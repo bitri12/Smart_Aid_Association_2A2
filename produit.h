@@ -8,17 +8,12 @@
 #include <QSqlTableModel>
 #include<QString>
 #include <QFile>
-#include <QtCharts/QChartView>
-#include <QtCharts/QPieSeries>
-#include <QtCharts/QPieSlice>
-#include <QImage>
-#include <QPixmap>
-#include <QByteArray>
+#include"exel.h"
+#include"mainwindow.h"
 class produit
 {
     int id_produit, quantite,id_adherent,code_barre;
     QString type_produit, marque,libele;
-    QImage photo;
 
 public:
     //initialisation
@@ -41,15 +36,16 @@ public:
     void setMarque(QString);
     void setLibele(QString);
     //CRUD
-    bool ajouter();
-    QSqlQueryModel * afficher();
-    bool supprimer(int);
+    bool ajouter1();
+    QSqlQueryModel * afficher1();
+    bool supprimer1(int);
     bool modifier(produit);
     //METIER
     QSqlQueryModel * Tridispo();
     QSqlQueryModel * Trinondispo();
-    QSqlQueryModel * triId();
-    QSqlQueryModel * recherche(QString);
+    QSqlQueryModel * triid();
+    void recherche1(QTableView* table,int);
+
     // Suplément
 
     bool retirer(int,int);

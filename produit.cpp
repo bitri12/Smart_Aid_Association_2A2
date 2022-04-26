@@ -1,4 +1,5 @@
 #include "produit.h"
+#include"mainwindow.h"
 //initialisation
 produit::produit()
 {
@@ -36,8 +37,6 @@ int produit::getQuantite(){
     return quantite;
 }
 
-
-
 QString produit::getLibele(){
     return libele;
 }
@@ -48,7 +47,6 @@ QString produit::getMarque(){
 QString produit::getTypeProduit() {
     return type_produit;
 }
-
 //Setters
 void produit::setCodeBarre(int code_barre){
     this->code_barre = code_barre;
@@ -77,13 +75,13 @@ void produit::setTypeProduit(QString t){
 }
 //CRUD
 
-bool produit::ajouter() {
+bool produit::ajouter1() {
     QSqlQuery query;
     QString id_produit_convertit= QString::number(id_produit);
     QString id_adherent_convertit= QString::number(id_adherent);
     QString quantite_convertit= QString::number(quantite);
     QString code_barre_convertit= QString::number(code_barre);
-    query.prepare("INSERT INTO produit(id_produit, id_adherent, quantite, code_barre, type_produit, marque,libele) VALUES (:id_produit, :id_adherent, :quantite, :code_barre, :type_produit, :marque, :libele)");
+    query.prepare("INSERT INTO produit(id_produit, type_produit, marque, libele, quantite, id_adherent,code_barre) VALUES (:id_produit, :type_produit, :marque, :libele, :quantite, :id_adherent, :code_barre)");
     query.bindValue(":id_produit", id_produit_convertit);
     query.bindValue(":id_adherent", id_adherent_convertit);
     query.bindValue(":quantite", quantite_convertit);
@@ -93,7 +91,7 @@ bool produit::ajouter() {
     query.bindValue(":libele", libele);
     return query.exec();
 }
-bool produit::supprimer(int id_produit)
+bool produit::supprimer1(int id_produit)
 {
     QSqlQuery query;
     QString id_produit_convertit = QString::number(id_produit);
@@ -101,7 +99,8 @@ bool produit::supprimer(int id_produit)
     query.bindValue(":id_produit", id_produit_convertit);
     return query.exec();
 }
-QSqlQueryModel* produit::afficher()
+
+QSqlQueryModel* produit::afficher1()
 {
     QSqlQueryModel* model= new QSqlQueryModel();
           model->setQuery("SELECT * FROM produit");
@@ -111,7 +110,7 @@ QSqlQueryModel* produit::afficher()
           model->setHeaderData(3, Qt::Horizontal, QObject::tr("libele"));
           model->setHeaderData(4, Qt::Horizontal, QObject::tr("code_barre"));
           model->setHeaderData(5, Qt::Horizontal, QObject::tr("quantite"));
-          model->setHeaderData(6, Qt::Horizontal, QObject::tr("id_adherent"));
+          model->setHeaderData(5, Qt::Horizontal, QObject::tr("id_adherent"));
     return model;
 }
 bool produit::modifier(produit p)
@@ -130,7 +129,7 @@ bool produit::modifier(produit p)
 }
 //Metier
 
-QSqlQueryModel * produit::Tridispo() {
+QSqlQueryModel * Tridispo() {
     QSqlQueryModel* model= new QSqlQueryModel();
     model->setQuery("SELECT * FROM produit WHERE quantite > 0");
     model->setHeaderData(0, Qt::Horizontal, QObject::tr("id_produit"));
@@ -139,10 +138,10 @@ QSqlQueryModel * produit::Tridispo() {
     model->setHeaderData(3, Qt::Horizontal, QObject::tr("libele"));
     model->setHeaderData(4, Qt::Horizontal, QObject::tr("code_barre"));
     model->setHeaderData(5, Qt::Horizontal, QObject::tr("quantite"));
-    model->setHeaderData(6, Qt::Horizontal, QObject::tr("id_adherent"));
+    model->setHeaderData(5, Qt::Horizontal, QObject::tr("id_adherent"));
     return model;
 }
-QSqlQueryModel * produit::Trinondispo() {
+QSqlQueryModel * Trinondispo() {
     QSqlQueryModel* model= new QSqlQueryModel();
     model->setQuery("SELECT * FROM produit WHERE quantite = 0");
     model->setHeaderData(0, Qt::Horizontal, QObject::tr("id_produit"));
@@ -151,25 +150,28 @@ QSqlQueryModel * produit::Trinondispo() {
     model->setHeaderData(3, Qt::Horizontal, QObject::tr("libele"));
     model->setHeaderData(4, Qt::Horizontal, QObject::tr("code_barre"));
     model->setHeaderData(5, Qt::Horizontal, QObject::tr("quantite"));
-    model->setHeaderData(6, Qt::Horizontal, QObject::tr("id_adherent"));
+    model->setHeaderData(5, Qt::Horizontal, QObject::tr("id_adherent"));
     return model;
 }
+QSqlQueryModel * triid() {
+    QSqlQueryModel * model= new QSqlQueryModel();
+     QSqlQuery *q = new QSqlQuery();
 
-QSqlQueryModel * produit::recherche(QString re) {
-    QSqlQueryModel * model=new QSqlQueryModel();
+     q->prepare("SELECT * FROM produit ORDER BY id_produit ");
+     q->exec();
+     model->setQuery(*q);
+     return model;
+}
 
-    //id_pr, nom, prix, qr_code, stock, image, date_impo, description
-
-    model->setQuery("SELECT * FROM produit WHERE ID_PRODUIT LIKE '"+re+"%' OR MARQUE LIKE '"+re+"%' OR LIBELE LIKE '"+re+"%' OR CODE_BARRE LIKE '"+re+"%'");
-    // model->setQuery("SELECT * FROM reclamation WHERE numrec LIKE '"+recherche+"%' OR titre LIKE '"+recherche+"%' OR type LIKE '"+recherche+"%'");
-    model->setHeaderData(0, Qt::Horizontal, QObject::tr("id_produit"));
-    model->setHeaderData(1, Qt::Horizontal, QObject::tr("type_produit"));
-    model->setHeaderData(2, Qt::Horizontal, QObject::tr("marque"));
-    model->setHeaderData(3, Qt::Horizontal, QObject::tr("libele"));
-    model->setHeaderData(4, Qt::Horizontal, QObject::tr("code_barre"));
-    model->setHeaderData(5, Qt::Horizontal, QObject::tr("quantite"));
-    model->setHeaderData(6, Qt::Horizontal, QObject::tr("id_adherent"));
-    return model;
+void produit::recherche1(QTableView *table, int res){
+    QSqlQueryModel *model= new QSqlQueryModel();
+        QSqlQuery *query=new QSqlQuery;
+        query->prepare("select * from produit where id_produit=:id_produit");
+        query->bindValue(":id_produit",res);
+        query->exec();
+        model->setQuery(*query);
+        table->setModel(model);
+        table->show();
 }
 
 bool produit::retirer(int id_produit, int Quantite) {
