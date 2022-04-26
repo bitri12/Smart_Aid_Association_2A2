@@ -1,0 +1,385 @@
+#include "mainwindow.h"
+#include "ui_mainwindow.h"
+#include "familles.h"
+#include<QMessageBox>
+#include<QIntValidator>
+#include <QSqlTableModel>
+#include <QTableView>
+#include <QFileDialog>
+#include <QPrinter>
+#include <QTextStream>
+#include <QTextDocument>
+#include<QPrintDialog>
+#include<QTextEdit>
+#include<QDesktopServices>
+#include<QPixmapCache>
+#include<QObject>
+#include"arduino.h"
+#include <QDebug>
+
+
+MainWindow::MainWindow(QWidget *parent) :
+    QMainWindow(parent),
+    ui(new Ui::MainWindow)
+{
+
+    ui->setupUi(this);
+    int ret=a.connect_arduino(); // lancer la connexion à arduino
+       switch(ret){
+       case(0):qDebug()<< "arduino is available and connected to : "<< a.getarduino_port_name();
+           break;
+       case(1):qDebug() << "arduino is available but not connected to :" <<a.getarduino_port_name();
+          break;
+       case(-1):qDebug() << "arduino is not available";
+       }
+       QObject::connect(a.getserial(),SIGNAL(readyRead()),this,SLOT(update_label()));
+
+    ui->Le_id->setValidator(new QIntValidator(0, 9999999, this));
+    ui->le_tel->setValidator(new QIntValidator(0, 99999999, this));
+     ui->le_nbr->setValidator(new QIntValidator(0, 9999999, this));
+
+  ui->tableView->setModel(F.afficher());
+
+}
+
+
+MainWindow::~MainWindow()
+{
+    delete ui;
+}
+
+void MainWindow::on_pb_ajouter_clicked()
+{
+
+    int id_famille = ui->Le_id->text().toInt();
+    QString nom=ui->le_nom->text();
+    QString prenom=ui->le_prenom->text();
+    int nbr = ui->le_nbr->text().toInt();
+    int num = ui->le_tel->text().toInt();
+    QString loca = ui->la_loca->text();
+    Familles F(id_famille,nom,prenom,nbr,num,loca);
+    bool test=F.ajouter();
+    if (test)
+    {
+        ui->tableView->setModel(F.afficher());
+        QMessageBox::information(nullptr, QObject::tr("ok"),
+                                 QObject::tr("Ajout effectué\n"),
+                                 QMessageBox::Cancel);
+         ui->Le_id->clear();
+        ui->le_nom->clear();
+        ui->le_prenom->clear();
+          ui->le_nbr->clear();
+         ui->le_tel->clear();
+         ui->la_loca->clear();
+
+    }
+    else
+    {
+        QMessageBox::critical(nullptr, QObject::tr("not ok"),
+                                 QObject::tr("Ajout non  effectué\n"),
+                                 QMessageBox::Cancel);
+    }
+
+}
+
+
+void MainWindow::on_pb_supp_clicked()
+{
+    int id_famille=ui->supp->text().toInt();
+    bool test=F.supprimer(id_famille);
+
+    if (test)
+
+
+        {
+         ui->tableView->setModel(F.afficher());
+            QMessageBox::information(nullptr, QObject::tr("ok"),
+                                     QObject::tr("suppression effectué\n"),
+                                     QMessageBox::Cancel);
+            ui->supp->clear();
+        }
+        else
+        {
+            QMessageBox::critical(nullptr, QObject::tr("not ok"),
+                                     QObject::tr("suppression non  effectué\n"),
+                                     QMessageBox::Cancel);
+        }
+}
+
+
+void MainWindow::on_pushButton_clicked()
+{
+Familles F;
+    F.setid_famille(ui->Le_id->text().toUInt());
+    F.setnom(ui->le_nom->text());
+    F.setprenom(ui->le_prenom->text());
+    F.setnbr(ui->le_nbr->text().toUInt());
+    F.setnumero( ui->le_tel->text().toUInt());
+    F.setloca(ui->la_loca->text());
+    F.modifier(F);
+     ui->tableView->setModel(F.afficher());
+    bool test=F.modifier(F);
+    if (test)
+    {
+        ui->tableView->setModel(F.afficher());
+           QMessageBox::information(nullptr, QObject::tr("ok"),
+                                    QObject::tr("modification effectuée\n"),
+                                    QMessageBox::Cancel);}
+    else
+    {
+        QMessageBox::critical(nullptr, QObject::tr("not ok"),
+                                 QObject::tr("modification non effectuée\n"),
+                                 QMessageBox::Cancel);
+    }
+}
+
+
+
+
+
+void MainWindow::on_TRI_clicked()
+{
+    Familles f;
+
+  ui->tableView->setModel(f.tri());
+}
+
+
+
+
+void MainWindow::on_pushButton_2_clicked()
+{
+    QString findText;
+          QString text = ui->lineEdit_2->text();
+      Familles f;
+      QTableView* table=ui->tableView;
+          if (text.isEmpty()) {
+              QMessageBox::information(this, tr("Empty Field"),
+                  tr("Entrez une specialité a rechercher."));
+              ui->tableView->setModel(f.afficher());
+              return;
+          } else {
+              findText = text;
+              f.recherche2(table,findText.toUInt());
+
+
+
+
+  }
+ }
+
+void MainWindow::on_pdf_clicked()
+{
+    QString strStream;
+                    QTextStream out(&strStream);
+
+                    const int rowCount = ui->tableView->model()->rowCount();
+                    const int columnCount = ui->tableView->model()->columnCount();
+
+                    out <<  "<html>\n"
+                        "<head>\n"
+                        "<meta Content=\"Text/html; charset=Windows-1251\">\n"
+                        <<  QString("<title>%1</title>\n").arg("strTitle")
+                        <<  "</head>\n"
+                        "<body bgcolor=#ffffff link=#5000A0>\n"
+
+                       //     "<align='right'> " << datefich << "</align>"
+                        "<center> <H1>Liste des Familles </H1></br></br><table border=1 cellspacing=0 cellpadding=2>\n";
+
+                    // headers
+                    out << "<thead><tr bgcolor=#f0f0f0> <th>Numero</th>";
+                    for (int column = 0; column < columnCount; column++)
+                        if (!ui->tableView->isColumnHidden(column))
+                            out << QString("<th>%1</th>").arg(ui->tableView->model()->headerData(column, Qt::Horizontal).toString());
+                    out << "</tr></thead>\n";
+
+                    // data table
+                    for (int row = 0; row < rowCount; row++) {
+                        out << "<tr> <td bkcolor=0>" << row+1 <<"</td>";
+                        for (int column = 0; column < columnCount; column++) {
+                            if (!ui->tableView->isColumnHidden(column)) {
+                                QString data = ui->tableView->model()->data(ui->tableView->model()->index(row, column)).toString().simplified();
+                                out << QString("<td bkcolor=0>%1</td>").arg((!data.isEmpty()) ? data : QString("&nbsp;"));
+                            }
+                        }
+                        out << "</tr>\n";
+                    }
+                    out <<  "</table> </center>\n"
+                        "</body>\n"
+                        "</html>\n";
+
+              QString fileName = QFileDialog::getSaveFileName((QWidget* )0, "Sauvegarder en PDF", QString(), "*.pdf");
+                if (QFileInfo(fileName).suffix().isEmpty()) { fileName.append(".pdf"); }
+
+               QPrinter printer (QPrinter::PrinterResolution);
+                printer.setOutputFormat(QPrinter::PdfFormat);
+               printer.setPaperSize(QPrinter::A4);
+              printer.setOutputFileName(fileName);
+
+               QTextDocument doc;
+                doc.setHtml(strStream);
+                doc.setPageSize(printer.pageRect().size()); // This is necessary if you want to hide the page number
+                doc.print(&printer);
+}
+
+void MainWindow::on_pushButton_3_clicked()
+{
+
+    QPrinter printer;
+
+    printer.setPrinterName("desiered printer name");
+
+  QPrintDialog dialog(&printer,this);
+
+    if(dialog.exec()== QDialog::Rejected)
+                ;
+}
+bool MainWindow::controlSaisie(){
+
+
+    if (
+            !(ui->Le_id->text().toInt()== 0 ) ||
+            !(ui->le_nom->text().contains(QRegExp("^[A-Za-z]+$"))) ||
+            !(ui->le_prenom->text().contains(QRegExp("^[A-Za-z]+$"))) ||
+            ui->le_nbr->text().isEmpty() ||
+            ui->le_tel->text().toInt() == 0 ||
+            ui->la_loca->text().contains(QRegExp("^[A-Za-z]+$")))
+
+
+        return 0;
+    else
+        return 1;
+}
+
+
+void MainWindow::on_pushButton_4_clicked()
+{
+
+
+        QString filename = QFileDialog::getSaveFileName(this,tr("choose"),"",tr("Image(*.png *.jpeg *.jpg *.bmp *.gif)"));
+        if (QString::compare(filename,QString()) !=0)
+        {
+            QImage image;
+            bool valid = image.load(filename);
+            if(valid)
+            {
+                image=image.scaledToWidth(ui->img_label->width(), Qt::SmoothTransformation);
+                        ui->img_label->setPixmap(QPixmap::fromImage(image));
+            }
+
+         }
+    }
+
+
+
+void MainWindow::on_pushButton_5_clicked()
+{
+
+    Familles f;
+
+  ui->tableView->setModel(f.trinbr());
+
+    }
+
+
+
+void MainWindow::on_pushButton_6_clicked()
+{
+    QMessageBox::StandardButton reply = QMessageBox::question(this,"My Title","Are you sure to quit the  page? ", QMessageBox::Yes| QMessageBox::No);
+    if(reply == QMessageBox::Yes){
+        QApplication::quit();
+    }else{
+        qDebug() << "Answer 'NO' Button is clicked";
+    }
+}
+
+
+
+
+
+void MainWindow::on_pushButton_7_clicked()
+{
+     QString message = ui->lineEdit2->text();
+    ui->lineEdit1->setText(message);
+
+
+}
+
+
+void MainWindow::on_pushButton_8_clicked()
+{
+    QString message = ui->lineEdit3->text();
+   ui->lineEdit1->setText(message);
+
+
+
+}
+QT_CHARTS_USE_NAMESPACE
+
+void MainWindow::on_pushButton_9_clicked()
+{
+    QString filename=QFileDialog::getOpenFileName (
+                this,
+    tr("Open File"),
+    "C:/Users/Mega-PC/Downloads/VID",
+    "All files (*.*);;Text File (*.txt);;Music file(*.mp3)"
+    ) ;
+    QDesktopServices::openUrl(QUrl("file:///"+filename));
+   // QMessageBox::information (this,tr("File Name"),filename);
+}
+
+
+
+void MainWindow::on_pushButton_10_clicked()
+{
+     ui->tableView->setModel(F.afficher());
+}
+
+void MainWindow::on_pushButton_11_clicked()
+{
+
+    ui->tabWidget->setCurrentIndex(1);
+    QString text ="client details :"+ ui->tableView->model()->data(ui->tableView->model()->index(ui->tableView->currentIndex().row(),1)).toString()
+           /* +" "+ui->tableView->model()->data(ui->tableView->model()->index(ui->tableView->currentIndex().row(),2)).toString()
+            +" "+ui->tableView->model()->data(ui->tableView->model()->index(ui->tableView->currentIndex().row(),3)).toString()
+            +" "+ui->tableView->model()->data(ui->tableView->model()->index(ui->tableView->currentIndex().row(),4)).toString()
+            +" "+ui->tableView->model()->data(ui->tableView->model()->index(ui->tableView->currentIndex().row(),5)).toString()
+            +" "+ui->tableView->model()->data(ui->tableView->model()->index(ui->tableView->currentIndex().row(),6)).toString()*/;
+    //text="user data";
+    using namespace qrcodegen;
+      // Create the QR Code object
+      QrCode qr = QrCode::encodeText( text.toUtf8().data(), QrCode::Ecc::MEDIUM );
+      qint32 sz = qr.getSize();
+      QImage im(sz,sz, QImage::Format_RGB32);
+        QRgb black = qRgb(  0,  0,  0);
+        QRgb white = qRgb(255,255,255);
+      for (int y = 0; y < sz; y++)
+        for (int x = 0; x < sz; x++)
+          im.setPixel(x,y,qr.getModule(x, y) ? black : white );
+      ui->qrCode->setPixmap( QPixmap::fromImage(im.scaled(256,256,Qt::KeepAspectRatio,Qt::FastTransformation),Qt::MonoOnly) );
+}
+
+
+
+
+
+void MainWindow::on_pushButton_13_clicked()
+{
+
+    a.write_to_arduino("1");
+}
+
+
+void MainWindow::update_label(){
+    data=a.read_from_arduino();
+
+    qDebug()<<"data "<<data;
+    if (data=="1")
+    {
+        QMessageBox::information(nullptr, QObject::tr("voiture en marche"),
+                    QObject::tr(" voiture en marche"
+                                ".\n"
+                                "Click Cancel to exit."), QMessageBox::Cancel);
+
+    }
+}
